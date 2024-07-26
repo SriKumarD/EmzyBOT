@@ -204,7 +204,9 @@ if  (user_query is not None and user_query != "" ) :
                         "tool_call_id":tool_call_id, 
                         "name": tool_function_name, 
                         "content":f"""Summarize the result as chat bot. Here is result:{results}.\
-                        If asked anything beyond Mexican Products or results is empty dont answer, Just say "Cannot answer questions that are out of context.
+                        -If result are empty Just say "Cannot answer questions that are out of context.
+                        -If asked anything beyond Mexican Products or results is empty dont answer, Just say "Cannot answer questions that are out of context".
+                        -If {user_query} is  something not related to Mexcio or Amazon Mexcian products ,Just say "Cannot answer questions that are out of context"
                         """
                     })
                     
