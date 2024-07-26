@@ -1,1 +1,1 @@
-# EmzyBOT
+# EnzyBOT
