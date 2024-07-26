@@ -258,8 +258,8 @@ if  (user_query is not None and user_query != "" ) :
             st.session_state.chat_history.append(AIMessage(content=response))
     else:
         with st.chat_message("AI"):
-            st.markdown("We're sorry, but your input has been flagged as inappropriate. Please rephrase your input and try again.")
-        st.session_state.chat_history.append(AIMessage(content="We're sorry, but your input has been flagged as inappropriate. Please rephrase your input and try again."))
+            st.markdown(":red[We're sorry, but your input has been flagged as inappropriate. Please rephrase your input and try again.]")
+        st.session_state.chat_history.append(AIMessage(content=":red[We're sorry, but your input has been flagged as inappropriate. Please rephrase your input and try again.]"))
  
             
             
