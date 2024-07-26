@@ -205,9 +205,11 @@ if  (user_query is not None and user_query != "" ) :
                         "role":"tool", 
                         "tool_call_id":tool_call_id, 
                         "name": tool_function_name, 
-                        "content":f"""Summarize the result as chat bot. Here is result:{results}.\
-                        -If result are empty Just say "Please be more specific with your question of what you are looking into."
-                        -If {user_query} is something not about the Mexcio country or Amazon Mexcian products ,Just say "Please be more specific and provide context for your question about what you are looking into."
+                        "content":f"""
+                        - Summarize the result as chat bot. Here is result:{results}.\
+                        - check is result:{results} empty. If it is empty Just say "Please be more specific with your question and stay within the context of the discussion."
+                        - If result are empty Just say "Please be more specific with your question and stay within the context of the discussion."
+                        - If {user_query} is something not about the Mexcio country or Amazon Mexcian products ,Just say "Please be more specific with your question and stay within the context of the discussion."
                         """
                     })
                     
