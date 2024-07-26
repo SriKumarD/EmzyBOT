@@ -209,7 +209,7 @@ if  (user_query is not None and user_query != "" ) :
                         - Summarize the result as chat bot. Here is result:{results}.\
                         - check is result:{results} empty. If it is empty Just say "Please be more specific with your question and stay within the context of the discussion."
                         - If result are empty Just say "Please be more specific with your question and stay within the context of the discussion."
-                        - If {user_query} is something not about the Mexcio country or Amazon Mexcian products ,Just say "Please be more specific with your question and stay within the context of the discussion."
+                        ***Strictly check If user_query: {user_query} is something not about the  country Mexcio ,Just say "Please be more specific with your question and stay within the context of the discussion."***
                         """
                     })
                     
