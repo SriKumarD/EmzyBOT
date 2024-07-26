@@ -40,12 +40,11 @@ st.set_page_config(page_title="Enzymedica Digestive Advisor", page_icon="👨‍
 st.title(" Enzymedica Digestive Advisor")
 st.caption("Your expert assistant for digestive health products in Mexico and Enzymedica product information.")
 def get_response(user_query, chat_history,documets):
-    print(len(documets))
     template = """
     ("system", "You are a marketing Advisor for Enzymedica, which is a digestive enzymes & health supplements company. You should only answer questions\
           related to Enzymedica products and gut health or Product Questions. Do not answer anything beyond these topics. If asked anything beyond \
           Enzymedica Products or Gut health or Problem related Questions, Just say "Cannot answer questions that are out of context". You will be provided with a chat history \
-          related documents and a user question. 
+          related documents and a user question. Strictly do not answer any questions outside of Enzymedica or related documents.
             ")
     ("human", "Answer the following questions considering the history of the conversation and documents related to Question:
     Chat history: {chat_history} \
@@ -154,7 +153,6 @@ def ask_database(collection,query):
     """Function to query MongoDB database with a provided MongoDB query."""
     try:
         results = eval(query)
-        print(results)
         if results:
             return results
         else:
@@ -169,8 +167,6 @@ if  (user_query is not None and user_query != "" ) :
         st.markdown(user_query)
     flag=check_moderation_flag(user_query)
     if not flag:
-        # Step #1: Prompt with content that may result in function call. In this case the model can identify the information requested by the user is potentially available in the database schema passed to the model in Tools description. 
-        
         messages = [{
             "role":"user", 
             "content": user_query
@@ -187,7 +183,7 @@ if  (user_query is not None and user_query != "" ) :
         response_message = response.choices[0].message 
         messages.append(response_message)
         tool_calls = response_message.tool_calls
-        print(tool_calls)
+
         if tool_calls:
             # If true the model will return the name of the tool / function to call and the argument(s)  
             tool_call_id = tool_calls[0].id
@@ -234,7 +230,6 @@ if  (user_query is not None and user_query != "" ) :
                     # Extract 'text' from each metadata dictionary within the matches list
                     product_texts = [match['metadata']['text'] for match in res['matches']]
 
-                    # Print each extracted text
                     documets=[]
                     for text in product_texts:
                         documets.append(text)
@@ -254,7 +249,6 @@ if  (user_query is not None and user_query != "" ) :
                     # Extract 'text' from each metadata dictionary within the matches list
                     product_texts = [match['metadata']['text'] for match in res['matches']]
 
-                    # Print each extracted text
                     documets=[]
                     for text in product_texts:
                         documets.append(text)
