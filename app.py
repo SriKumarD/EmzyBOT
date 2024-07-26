@@ -47,6 +47,7 @@ def get_response(user_query, chat_history,documets):
     - Enzymedica Products or Gut health or Problem related Questions, Just say "Cannot answer questions that are out of context".\
     - You will be provided with a chat history related documents and a user question. \
     - Strictly do not answer any questions outside of Enzymedica or related documents.\
+    - If the user greets you, greet the user in return
             ")
     ("human", "Answer the following questions considering the history of the conversation and documents related to Question:
     Chat history: {chat_history} \
