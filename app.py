@@ -203,7 +203,9 @@ if  (user_query is not None and user_query != "" ) :
                         "role":"tool", 
                         "tool_call_id":tool_call_id, 
                         "name": tool_function_name, 
-                        "content":f"""Summarize the result as chat bot. Here is result:{results}"""
+                        "content":f"""Summarize the result as chat bot. Here is result:{results}.\
+                        If asked anything beyond Mexican Products or results is empty dont answer, Just say "Cannot answer questions that are out of context.
+                        """
                     })
                     
                     # Step 4: Invoke the chat completions API with the function response appended to the messages list
