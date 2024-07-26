@@ -162,110 +162,113 @@ def ask_database(collection,query):
     except Exception as e:
         return query
 
+try:
+    if  (user_query is not None and user_query != "" ) :
+        st.session_state.chat_history.append(HumanMessage(content=user_query))
+        with st.chat_message("Human"):
+            st.markdown(user_query)
+        flag=check_moderation_flag(user_query)
+        if not flag:
+            messages = [{
+                "role":"user", 
+                "content": user_query
+            }]
 
-if  (user_query is not None and user_query != "" ) :
-    st.session_state.chat_history.append(HumanMessage(content=user_query))
-    with st.chat_message("Human"):
-        st.markdown(user_query)
-    flag=check_moderation_flag(user_query)
-    if not flag:
-        messages = [{
-            "role":"user", 
-            "content": user_query
-        }]
+            response = model_client.chat.completions.create(
+                model='gpt-4o', 
+                messages=messages, 
+                tools= tools, 
+                tool_choice="auto"
+            )
 
-        response = model_client.chat.completions.create(
-            model='gpt-4o', 
-            messages=messages, 
-            tools= tools, 
-            tool_choice="auto"
-        )
+            # Append the message to messages list
+            response_message = response.choices[0].message 
+            messages.append(response_message)
+            tool_calls = response_message.tool_calls
 
-        # Append the message to messages list
-        response_message = response.choices[0].message 
-        messages.append(response_message)
-        tool_calls = response_message.tool_calls
-
-        if tool_calls:
-            # If true the model will return the name of the tool / function to call and the argument(s)  
-            tool_call_id = tool_calls[0].id
-            tool_function_name = tool_calls[0].function.name
-            tool_query_string = json.loads(tool_calls[0].function.arguments)['query']
-            
-            # Step 3: Call the function and retrieve results. Append the results to the messages list.      
-            if tool_function_name == 'ask_database':
-                results = ask_database(collection,tool_query_string)
-                result_len=len(enc.encode(str(results)))
-                if result_len > 100000:
+            if tool_calls:
+                # If true the model will return the name of the tool / function to call and the argument(s)  
+                tool_call_id = tool_calls[0].id
+                tool_function_name = tool_calls[0].function.name
+                tool_query_string = json.loads(tool_calls[0].function.arguments)['query']
+                
+                # Step 3: Call the function and retrieve results. Append the results to the messages list.      
+                if tool_function_name == 'ask_database':
+                    results = ask_database(collection,tool_query_string)
+                    result_len=len(enc.encode(str(results)))
+                    if result_len > 100000:
+                        with st.chat_message("AI"):
+                            st.markdown(":red[Retrieval Load Exceeded. Please be more specific with your question what you are looking into.]")
+                        st.session_state.chat_history.append(AIMessage(content="Retrieval Load Exceeded. Please be more specific with your question of what you are looking into."))
+                    else:
+                        messages.append({
+                            "role":"tool", 
+                            "tool_call_id":tool_call_id, 
+                            "name": tool_function_name, 
+                            "content":f"""
+                            - Summarize the result as chat bot. Here is result:{results}.\
+                            - check is result:{results} empty. If it is empty Just say "Please be more specific with your question and stay within the context of the discussion."
+                            - If result are empty Just say "Please be more specific with your question and stay within the context of the discussion."
+                            ***Strictly check If user_query: {user_query} is something not about the  country Mexcio ,Just say "Please be more specific with your question and stay within the context of the discussion."***
+                            """
+                        })
+                        
+                        # Step 4: Invoke the chat completions API with the function response appended to the messages list
+                        # Note that messages with role 'tool' must be a response to a preceding message with 'tool_calls'
+                        model_response_with_function_call = model_client.chat.completions.create(
+                            model="gpt-4o",
+                            messages=messages,
+                        )  # get a new response from the model where it can see the function response
+                        
+                        with st.chat_message("AI"):
+                            st.markdown(model_response_with_function_call.choices[0].message.content)
+                        st.session_state.chat_history.append(AIMessage(content=model_response_with_function_call.choices[0].message.content))
+                else: 
                     with st.chat_message("AI"):
-                        st.markdown(":red[Retrieval Load Exceeded. Please be more specific with your question what you are looking into.]")
-                    st.session_state.chat_history.append(AIMessage(content="Retrieval Load Exceeded. Please be more specific with your question of what you are looking into."))
-                else:
-                    messages.append({
-                        "role":"tool", 
-                        "tool_call_id":tool_call_id, 
-                        "name": tool_function_name, 
-                        "content":f"""
-                        - Summarize the result as chat bot. Here is result:{results}.\
-                        - check is result:{results} empty. If it is empty Just say "Please be more specific with your question and stay within the context of the discussion."
-                        - If result are empty Just say "Please be more specific with your question and stay within the context of the discussion."
-                        ***Strictly check If user_query: {user_query} is something not about the  country Mexcio ,Just say "Please be more specific with your question and stay within the context of the discussion."***
-                        """
-                    })
-                    
-                    # Step 4: Invoke the chat completions API with the function response appended to the messages list
-                    # Note that messages with role 'tool' must be a response to a preceding message with 'tool_calls'
-                    model_response_with_function_call = model_client.chat.completions.create(
-                        model="gpt-4o",
-                        messages=messages,
-                    )  # get a new response from the model where it can see the function response
-                    
-                    with st.chat_message("AI"):
-                        st.markdown(model_response_with_function_call.choices[0].message.content)
-                    st.session_state.chat_history.append(AIMessage(content=model_response_with_function_call.choices[0].message.content))
-            else: 
+                        res = model_client.embeddings.create(
+                                input=[user_query],
+                                model=embed_model
+                            )
+                        # retrieve from Pinecone
+                        xq = res.data[0].embedding
+
+                        # get relevant contexts (including the questions)
+                        res = index.query(vector=xq, top_k=5, include_metadata=True)
+                        # Extract 'text' from each metadata dictionary within the matches list
+                        product_texts = [match['metadata']['text'] for match in res['matches']]
+
+                        documets=[]
+                        for text in product_texts:
+                            documets.append(text)
+                        response = st.write_stream(get_response(user_query,st.session_state.chat_history,documets))
+                    st.session_state.chat_history.append(AIMessage(content=response))
+            else:
                 with st.chat_message("AI"):
-                    res = model_client.embeddings.create(
-                            input=[user_query],
-                            model=embed_model
-                        )
-                    # retrieve from Pinecone
-                    xq = res.data[0].embedding
+                        res = model_client.embeddings.create(
+                                input=[user_query],
+                                model=embed_model
+                            )
+                        # retrieve from Pinecone
+                        xq = res.data[0].embedding
 
-                    # get relevant contexts (including the questions)
-                    res = index.query(vector=xq, top_k=5, include_metadata=True)
-                    # Extract 'text' from each metadata dictionary within the matches list
-                    product_texts = [match['metadata']['text'] for match in res['matches']]
+                        # get relevant contexts (including the questions)
+                        res = index.query(vector=xq, top_k=5, include_metadata=True)
+                        # Extract 'text' from each metadata dictionary within the matches list
+                        product_texts = [match['metadata']['text'] for match in res['matches']]
 
-                    documets=[]
-                    for text in product_texts:
-                        documets.append(text)
-                    response = st.write_stream(get_response(user_query,st.session_state.chat_history,documets))
+                        documets=[]
+                        for text in product_texts:
+                            documets.append(text)
+                        response = st.write_stream(get_response(user_query,st.session_state.chat_history,documets))
                 st.session_state.chat_history.append(AIMessage(content=response))
         else:
             with st.chat_message("AI"):
-                    res = model_client.embeddings.create(
-                            input=[user_query],
-                            model=embed_model
-                        )
-                    # retrieve from Pinecone
-                    xq = res.data[0].embedding
-
-                    # get relevant contexts (including the questions)
-                    res = index.query(vector=xq, top_k=5, include_metadata=True)
-                    # Extract 'text' from each metadata dictionary within the matches list
-                    product_texts = [match['metadata']['text'] for match in res['matches']]
-
-                    documets=[]
-                    for text in product_texts:
-                        documets.append(text)
-                    response = st.write_stream(get_response(user_query,st.session_state.chat_history,documets))
-            st.session_state.chat_history.append(AIMessage(content=response))
-    else:
-        with st.chat_message("AI"):
-            st.markdown(":red[We're sorry, but your input has been flagged as inappropriate. Please rephrase your input and try again.]")
-        st.session_state.chat_history.append(AIMessage(content=":red[We're sorry, but your input has been flagged as inappropriate. Please rephrase your input and try again.]"))
- 
+                st.markdown(":red[We're sorry, but your input has been flagged as inappropriate. Please rephrase your input and try again.]")
+            st.session_state.chat_history.append(AIMessage(content=":red[We're sorry, but your input has been flagged as inappropriate. Please rephrase your input and try again.]"))
+except Exception as e: 
+    with st.chat_message("AI"):
+        st.markdown("We're sorry, there was a problem. Please try again.")
+    st.session_state.chat_history.append(AIMessage(content="We're sorry, there was a problem. Please try again."))
             
             
     
