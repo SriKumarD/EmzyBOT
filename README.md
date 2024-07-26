@@ -22,5 +22,9 @@ Initially, finding a suitable free SQL cloud service was challenging. Therefore,
 
 ## Flow Diagram
 
-![Alt text for the image](https://github.com/SriKumarD/EnzyBOT/blob/main/Flow_Diagram.png)
+![Flow image](https://github.com/SriKumarD/EnzyBOT/blob/main/Flow_Diagram.png)
 
+
+## Chatbot Interaction Demo
+
+![Flow image](https://github.com/SriKumarD/EnzyBOT/blob/main/About_Products.png)
