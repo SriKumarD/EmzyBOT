@@ -120,7 +120,7 @@ tools = [
         "type": "function",
         "function": {
             "name": "ask_database",
-            "description": "Dont call if Quetion is about Enzymedica .Use this function only to answer user questions about Digestive  Products in Mexcain data stoed in mongodb. Input should be a fully formed pymongo query. example query : list(collection.find())",
+            "description": "Dont call if quetion is about Enzymedica .Use this function only to answer user questions about Digestive  Products in Mexcain data stoed in mongodb. Input should be a fully formed pymongo query. example query : list(collection.find())",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -128,8 +128,9 @@ tools = [
                         "type": "string",
                         "description": f"""
                                 -pymongo query extracting info to answer the user's question.
-                                -pymongo should be written using this database schema:
-                                {schema}
+                                -pymongo should be written using this database schema and chat_hitory:
+                                database schema : {schema} and chat_hitory : {st.session_state.chat_history}
+                                - Use chart history only to understand if user is asking quetion related to previous response.According to chat_history and schema write pymongo query. 
                                 -The query should be returned in plain text, not in JSON. 
                                 -The output strictly contain only query not anyother sybmols in it
                                 -example query to find all : list(collection.find())
@@ -138,9 +139,7 @@ tools = [
                                 -you add python functions like len() to get number for particularly how many questions. Dont Do for Every Query
                                 -User ask about any digestive concers check match in Concerns attribute.
                                 -check query syntax before giving as syntax mistakes leads to errors.
-                                -for Which questions no need to use python functions.
-
-                                ###For Agrregation Query Here is example Sytnax: 
+                                -for Which questions no need to use python functions. 
                                 """,
                     }
                 },
