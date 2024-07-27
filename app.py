@@ -70,7 +70,7 @@ def get_response(user_query, chat_history,documets):
 # session state
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
-        AIMessage(content="Hello, I am a bot. How can I help you?"),
+        AIMessage(content="Hello! I'm your expert assistant for digestive health products in Mexico and Enzymedica product information. How may I assist you today?"),
     ]
 
    
